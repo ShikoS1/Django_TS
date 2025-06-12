@@ -1,0 +1,34 @@
+{% extends "TS_equipment/base.html" %}
+{% block title %}Журнал изменений оборудования{% endblock %}
+{% block content %}
+<div class="container py-3">
+    <div class="d-flex justify-content-end mb-3 gap-2">
+        <a href="?export=excel" class="btn btn-outline-success"><i class="bi bi-file-earmark-excel"></i> Скачать Excel</a>
+        <a href="?export=html" class="btn btn-outline-primary"><i class="bi bi-file-earmark-text"></i> Скачать HTML</a>
+        <a href="{% url 'equipment_detail' equipment.pk %}" class="btn btn-outline-secondary">Назад</a>
+    </div>
+    <h2 class="mb-4"><i class="bi bi-clock-history"></i> Журнал изменений оборудования: {{ equipment.name }}</h2>
+    <div class="table-responsive">
+        <table class="table table-bordered align-middle">
+            <thead class="table-primary text-center">
+                <tr>
+                    <th>Дата и время</th>
+                    <th>Операция</th>
+                    <th>Детали</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td>{{ log.timestamp|date:'d.m.Y H:i' }}</td>
+                    <td>{{ log.action }}</td>
+                    <td style="white-space: pre-line; word-break: break-word;">{{ log.details|default:'—' }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3" class="text-muted text-center">Нет записей</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

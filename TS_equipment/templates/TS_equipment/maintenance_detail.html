@@ -1,0 +1,40 @@
+{% extends "TS_equipment/base.html" %}
+{% block title %}Детали ТОиР{% endblock %}
+{% block content %}
+<div class="card shadow mb-4 glass-card">
+  <div class="card-header bg-primary text-white d-flex align-items-center">
+    <i class="bi bi-wrench fs-3 me-2"></i>
+    <h4 class="mb-0">Детальная информация о ТОиР</h4>
+  </div>
+  <div class="card-body">
+    <dl class="row mb-0">
+      <dt class="col-md-4">Тип работ</dt>
+      <dd class="col-md-8">{% if record.type == 'maintenance' %}<span class="badge bg-info">ТО</span>{% else %}<span class="badge bg-danger">Ремонт</span>{% endif %}</dd>
+      <dt class="col-md-4">Дата</dt>
+      <dd class="col-md-8">{{ record.date|date:'d.m.Y' }}</dd>
+      <dt class="col-md-4">ТС</dt>
+      <dd class="col-md-8">{% if record.vehicle %}<a href="{% url 'vehicle_detail' record.vehicle.pk %}">{{ record.vehicle }}</a>{% else %}—{% endif %}</dd>
+      <dt class="col-md-4">Оборудование</dt>
+      <dd class="col-md-8">{% if record.equipment %}<a href="{% url 'equipment_detail' record.equipment.pk %}">{{ record.equipment }}</a>{% else %}—{% endif %}</dd>
+      <dt class="col-md-4">Пробег/наработка</dt>
+      <dd class="col-md-8">{{ record.mileage|default:'—' }}</dd>
+      <dt class="col-md-4">Ответственный</dt>
+      <dd class="col-md-8">{{ record.responsible }}</dd>
+      <dt class="col-md-4">Статус</dt>
+      <dd class="col-md-8">{% if record.status == 'planned' %}<span class="badge bg-warning text-dark">Запланировано</span>{% elif record.status == 'done' %}<span class="badge bg-success">Выполнено</span>{% else %}<span class="badge bg-secondary">Отложено</span>{% endif %}</dd>
+      <dt class="col-md-4">Описание работ</dt>
+      <dd class="col-md-8">{{ record.description|default:'—' }}</dd>
+      <dt class="col-md-4">Документ</dt>
+      <dd class="col-md-8">{% if record.file %}<a href="{{ record.file.url }}" target="_blank"><i class="bi bi-paperclip"></i> Скачать</a>{% else %}—{% endif %}</dd>
+    </dl>
+    <div class="mt-4">
+      <a href="{% url 'maintenance_edit' record.pk %}" class="btn btn-outline-primary me-2"><i class="bi bi-pencil"></i> Редактировать</a>
+      <a href="{% url 'maintenance_list' %}" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> К списку</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'maintenance_list' %}">ТОиР</a></li>
+<li class="breadcrumb-item active" aria-current="page">Детали</li>
+{% endblock %}

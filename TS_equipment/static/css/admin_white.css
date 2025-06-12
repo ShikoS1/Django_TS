@@ -1,0 +1,25 @@
+
+:root {
+    --admin-bg: #fff;
+    --admin-fg: #222;
+    --admin-link: #005b9f;
+    --admin-link-hover: #0074d9;
+}
+body, .module, .grp-module, .grp-group {
+    background: var(--admin-bg) !important;
+    color: var(--admin-fg) !important;
+}
+a, .grp-navigation a, .grp-navigation a:visited {
+    color: var(--admin-link) !important;
+}
+a:hover, .grp-navigation a:hover {
+    color: var(--admin-link-hover) !important;
+}
+#header, .grp-header, .grp-module .grp-collapse {
+    background: #f8f9fa !important;
+    color: var(--admin-fg) !important;
+}
+#user-tools, .grp-user-tools {
+    background: #f8f9fa !important;
+    color: var(--admin-fg) !important;
+}

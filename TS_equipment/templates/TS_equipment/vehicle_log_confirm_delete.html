@@ -1,0 +1,19 @@
+{% extends "TS_equipment/base.html" %}
+{% block title %}Удалить запись журнала ТС{% endblock %}
+{% block content %}
+<div class="col-md-6 mx-auto">
+    <div class="alert alert-danger mt-4 shadow rounded-4">
+        <h4 class="mb-3"><i class="bi bi-trash"></i> Подтверждение удаления</h4>
+        <p>Вы уверены, что хотите удалить запись журнала <b>{{ log.action }}</b> от <b>{{ log.timestamp|date:'d.m.Y H:i' }}</b>?</p>
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Удалить</button>
+            <a href="{% url 'vehicle_detail' log.vehicle.pk %}" class="btn btn-secondary">Отмена</a>
+        </form>
+    </div>
+</div>
+{% endblock %}
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'vehicle_detail' log.vehicle.pk %}">ТС</a></li>
+<li class="breadcrumb-item active" aria-current="page">Удалить запись журнала</li>
+{% endblock %}

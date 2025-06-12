@@ -1,0 +1,43 @@
+{% extends "TS_equipment/base.html" %}
+{% block title %}Снять пломбу{% endblock %}
+{% block content %}
+<div class="col-md-6 mx-auto">
+    <h2 class="mb-3">Снять пломбу</h2>
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5>{{ equipment.name }} <span class="text-muted">({{ equipment.serial_number }})</span></h5>
+            {% if messages %}
+              {% for message in messages %}
+                <div class="alert alert-success">{{ message }}</div>
+              {% endfor %}
+            {% endif %}
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    {{ form.unseal_reason.label_tag }}
+                    {{ form.unseal_reason }}
+                    {% if form.unseal_reason.errors %}
+                        <div class="alert alert-danger mt-1 mb-0 py-1 px-2">{{ form.unseal_reason.errors|join:', ' }}</div>
+                    {% endif %}
+                </div>
+                <div class="mb-3">
+                    {{ form.unseal_responsible.label_tag }}
+                    {{ form.unseal_responsible }}
+                    {% if form.unseal_responsible.errors %}
+                        <div class="alert alert-danger mt-1 mb-0 py-1 px-2">{{ form.unseal_responsible.errors|join:', ' }}</div>
+                    {% endif %}
+                </div>
+                <div class="d-grid gap-2 mt-3">
+                    <button type="submit" class="btn btn-danger"><i class="bi bi-x-circle"></i> Снять пломбу</button>
+                    <a href="{% url 'equipment_list' %}" class="btn btn-outline-secondary">Назад</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'equipment_list' %}">Оборудование</a></li>
+<li class="breadcrumb-item"><a href="{% url 'equipment_detail' equipment.pk %}">{{ equipment.name }}</a></li>
+<li class="breadcrumb-item active" aria-current="page">Снять пломбу</li>
+{% endblock %}

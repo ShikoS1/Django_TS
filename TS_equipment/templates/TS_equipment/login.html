@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход | Учёт оборудования ТС</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="/static/css/styles.css" rel="stylesheet">
+    <style>
+        body {
+            background: #fff;
+            min-height: 100vh;
+        }
+        .login-card {
+            max-width: 400px;
+            margin: 80px auto;
+            border-radius: 1.5rem;
+            box-shadow: 0 8px 32px rgba(0,91,159,0.10);
+            background: #fff;
+        }
+        .login-logo {
+            width: 60px;
+            margin-bottom: 1rem;
+        }
+        .form-label {
+            color: #005b9f;
+            font-weight: 500;
+        }
+        .form-control {
+            border-radius: 0.75rem;
+            border: 1.5px solid #e3e3e3;
+            font-size: 1.1rem;
+        }
+        .form-control:focus {
+            border-color: #005b9f;
+            box-shadow: 0 0 0 0.2rem rgba(0,91,159,0.08);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="login-card card p-4">
+            <div class="text-center">
+                <img src="https://optim.tildacdn.com/tild6361-3133-4139-b161-356339353034/-/format/webp/_.png.webp" alt="Логотип" class="login-logo">
+                <h2 class="mb-3" style="color:#005b9f;">Вход в систему</h2>
+            </div>
+            <form method="post" autocomplete="username">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="id_username" class="form-label">Логин</label>
+                    <input type="text" name="username" autofocus required maxlength="150" class="form-control" id="id_username" placeholder="Введите логин">
+                </div>
+                <div class="mb-3">
+                    <label for="id_password" class="form-label">Пароль</label>
+                    <input type="password" name="password" required class="form-control" id="id_password" placeholder="Введите пароль">
+                </div>
+                <div class="d-grid gap-2 mt-3">
+                    <button type="submit" class="btn btn-primary">Войти</button>
+                </div>
+            </form>
+        </div>
+    </div>    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

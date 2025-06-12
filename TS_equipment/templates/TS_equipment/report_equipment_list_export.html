@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Список оборудования</title>
+    <style>
+        table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; }
+        th, td { border: 1px solid #888; padding: 6px 10px; text-align: left; }
+        th { background: #f0f0f0; }
+        tr:nth-child(even) { background: #fafafa; }
+    </style>
+</head>
+<body>
+    <table>
+        <thead>
+            <tr>
+                <th>Название</th>
+                <th>Серийный номер</th>
+                <th>ТС</th>
+                <th>Статус пломбы</th>
+                <th>Дата последнего ТО</th>
+                <th>Исправность</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for e in equipment %}
+            <tr>
+                <td>{{ e.name }}</td>
+                <td>{{ e.serial_number }}</td>
+                <td>{% if e.installed_in %}{{ e.installed_in }}{% else %}—{% endif %}</td>
+                <td>
+                    {% if e.seal_datetime and not e.unseal_datetime %}Пломбировано
+                    {% elif e.unseal_datetime %}Снята пломба
+                    {% else %}Без пломбы{% endif %}
+                </td>
+                <td>{% if e.maintenance_date %}{{ e.maintenance_date|date:'d.m.Y' }}{% else %}—{% endif %}</td>
+                <td>
+                    {% if e.is_operable == 'operable' %}Исправно
+                    {% elif e.is_operable == 'in_repair' %}В ремонте
+                    {% elif e.is_operable == 'faulty' %}Неисправно
+                    {% elif e.is_operable == 'on_maintenance' %}На ТО
+                    {% else %}—{% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

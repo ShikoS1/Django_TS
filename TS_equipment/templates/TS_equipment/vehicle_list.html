@@ -1,0 +1,159 @@
+{% extends "TS_equipment/base.html" %}
+{% block title %}Транспортные средства{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2><i class="bi bi-truck"></i> Транспортные средства</h2>
+    <div>
+      {% if perms.TS_equipment.add_vehicle or user.is_superuser %}
+        <a href="{% url 'vehicle_add' %}" class="btn btn-primary ms-2"><i class="bi bi-plus"></i> Добавить ТС</a>
+      {% endif %}
+    </div>
+</div>
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert alert-success">{{ message }}</div>
+  {% endfor %}
+{% endif %}
+<div class="row mb-3">
+  <div class="col-md-2 mb-2">
+    <select id="filter-vcat" class="form-select">
+      <option value="">Все категории</option>
+      <option value="car">Легковой автомобиль</option>
+      <option value="truck">Грузовик</option>
+      <option value="bus">Автобус</option>
+      <option value="special">Спецтехника</option>
+      <option value="other">Другое</option>
+    </select>
+  </div>
+  <div class="col-md-4 mb-2">
+    <input id="filter-vsearch" type="text" class="form-control" placeholder="Поиск по номеру, модели, производителю...">
+  </div>
+</div>
+<div class="vehicle-table-container">
+  <div class="table-responsive-sm px-2">
+    <table class="table table-hover table-bordered align-middle shadow-sm bg-white w-100" id="vehicle-table">
+      <thead class="table-primary text-center align-middle">
+          <tr>
+              <th class="text-center sortable" data-sort="category"><i class="bi bi-car-front"></i> <span class="sort-indicator"></span></th>
+              <th class="text-center sortable" data-sort="license_plate"><i class="bi bi-hash"></i> Гос. номер <span class="sort-indicator"></span></th>
+              <th class="text-center sortable" data-sort="model"><i class="bi bi-card-text"></i> Модель <span class="sort-indicator"></span></th>
+              <th class="text-center sortable" data-sort="manufacturer"><i class="bi bi-building"></i> Производитель <span class="sort-indicator"></span></th>
+              <th class="text-center sortable" data-sort="year"><i class="bi bi-calendar"></i> Год <span class="sort-indicator"></span></th>
+              <th class="text-center sortable" data-sort="vin"><i class="bi bi-123"></i> VIN <span class="sort-indicator"></span></th>
+              <th class="text-center sortable" data-sort="color"><i class="bi bi-palette"></i> Цвет <span class="sort-indicator"></span></th>
+              <th class="text-center sortable" data-sort="note" style="min-width:200px; max-width:500px; word-break:break-word; white-space:pre-line;"><i class="bi bi-card-text"></i> Примечание <span class="sort-indicator"></span></th>
+              <th class="text-center">Исправность</th>
+              <th class="text-center"><i class="bi bi-gear"></i></th>
+          </tr>
+      </thead>
+      <tbody>
+    {% for v in vehicles %}
+    <tr class="table-row-detail align-middle" style="cursor:pointer;" data-href="{% url 'vehicle_detail' v.pk %}" data-vcat="{{ v.category }}">
+        <td class="text-center">
+            {% if v.category == 'car' %}<i class="bi bi-car-front"></i>
+            {% elif v.category == 'truck' %}<i class="bi bi-truck"></i>
+            {% elif v.category == 'bus' %}<i class="bi bi-bus-front"></i>
+            {% elif v.category == 'special' %}<i class="bi bi-gear-wide-connected"></i>
+            {% else %}<i class="bi bi-box"></i>
+            {% endif %}
+        </td>
+        <td class="text-center">{{ v.license_plate }}</td>
+        <td class="text-center">{{ v.model }}</td>
+        <td class="text-center">{{ v.manufacturer }}</td>
+        <td class="text-center">{{ v.year }}</td>
+        <td class="text-center">{{ v.vin }}</td>
+        <td class="text-center">{{ v.color }}</td>
+        <td class="text-center" style="max-width:500px; word-break:break-word; white-space:pre-line;">{{ v.note }}</td>
+        <td class="text-center">
+            {% if v.repair_date %}
+                <span class="badge bg-danger" data-bs-toggle="tooltip" title="ТС в ремонте">В ремонте</span>
+            {% elif v.maintenance_date %}
+                <span class="badge bg-warning text-dark" data-bs-toggle="tooltip" title="ТС на техническом обслуживании">На ТО</span>
+            {% else %}
+                <span class="badge bg-success" data-bs-toggle="tooltip" title="ТС исправно">Исправно</span>
+            {% endif %}
+        </td>
+        <td class="text-center align-middle">
+          {% if perms.TS_equipment.change_vehicle or user.is_superuser %}
+            <a href="{% url 'vehicle_edit' v.pk %}" class="btn btn-sm btn-outline-primary mt-1" title="Редактировать" data-bs-toggle="tooltip"><i class="bi bi-pencil"></i></a>
+          {% endif %}
+          <a href="{% url 'vehicle_detail' v.pk %}" class="btn btn-sm btn-outline-info mt-1" title="Просмотр" data-bs-toggle="tooltip"><i class="bi bi-eye"></i></a>
+          {% if perms.TS_equipment.delete_vehicle or user.is_superuser %}
+            <a href="{% url 'vehicle_delete' v.pk %}" class="btn btn-sm btn-outline-danger delete-vehicle-btn mt-1" title="Удалить ТС" data-bs-toggle="tooltip"><i class="bi bi-trash"></i></a>
+          {% endif %}
+        </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="10" class="text-center text-muted">Нет данных</td></tr>
+    {% endfor %}
+</tbody>
+    </table>
+  </div>
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+      new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    document.querySelectorAll('.table-row-detail').forEach(function(row) {
+      row.addEventListener('click', function(e) {
+        if (!e.target.closest('a,button')) {
+          window.location.href = row.getAttribute('data-href');
+        }
+      });
+    });
+    // Сортировка таблицы
+    function compareRows(a, b, idx, type, asc) {
+      let v1 = a.children[idx].innerText.trim();
+      let v2 = b.children[idx].innerText.trim();
+      if(type === 'number') {
+        v1 = parseFloat(v1.replace(/[^\d.]/g, '')) || 0;
+        v2 = parseFloat(v2.replace(/[^\d.]/g, '')) || 0;
+      }
+      if(type === 'string') {
+        v1 = v1.toLowerCase();
+        v2 = v2.toLowerCase();
+      }
+      if(v1 < v2) return asc ? -1 : 1;
+      if(v1 > v2) return asc ? 1 : -1;
+      return 0;
+    }
+    const table = document.getElementById('vehicle-table');
+    const headers = table.querySelectorAll('th.sortable');
+    let sortState = {};
+    headers.forEach((th, idx) => {
+      th.addEventListener('click', function() {
+        let type = 'string';
+        if(['year'].includes(th.dataset.sort)) type = 'number';
+        const asc = !sortState[idx];
+        sortState = {}; sortState[idx] = asc;
+        table.querySelectorAll('span.sort-indicator').forEach(s => s.innerHTML = '');
+        th.querySelector('span.sort-indicator').innerHTML = asc ? '▲' : '▼';
+        const rows = Array.from(table.tBodies[0].rows).filter(r => !r.classList.contains('text-muted'));
+        rows.sort((a, b) => compareRows(a, b, idx, type, asc));
+        rows.forEach(r => table.tBodies[0].appendChild(r));
+      });
+    });
+    // Фильтрация
+    function filterTable() {
+      const cat = document.getElementById('filter-vcat').value;
+      const search = document.getElementById('filter-vsearch').value.toLowerCase();
+      document.querySelectorAll('.table-row-detail').forEach(function(row) {
+        let show = true;
+        if(cat && row.dataset.vcat !== cat) show = false;
+        if(search) {
+          const text = row.innerText.toLowerCase();
+          if(!text.includes(search)) show = false;
+        }
+        row.style.display = show ? '' : 'none';
+      });
+    }
+    document.getElementById('filter-vcat').addEventListener('change', filterTable);
+    document.getElementById('filter-vsearch').addEventListener('input', filterTable);
+  });
+</script>
+{% endblock %}
+{% block breadcrumb_items %}
+<li class="breadcrumb-item active" aria-current="page">Транспортные средства</li>
+{% endblock %}

@@ -1,0 +1,272 @@
+{% extends "TS_equipment/base.html" %}
+{% block title %}ТОиР — все записи{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2><i class="bi bi-wrench"></i> ТОиР — все записи</h2>
+    <div>
+      {% if perms.TS_equipment.can_assign_responsible or perms.TS_equipment.can_set_unplanned_seal or perms.TS_equipment.can_set_maintenance_date or perms.TS_equipment.can_set_repair_date or user.is_superuser %}
+        <a href="{% url 'maintenance_add' %}" class="btn btn-primary"><i class="bi bi-plus"></i> Добавить запись</a>
+        <a href="?{% for k,v in filter.items %}{% if v %}{{k}}={{v}}&{% endif %}{% endfor %}export=excel" class="btn btn-outline-success ms-2" title="Экспортировать в Excel"><i class="bi bi-file-earmark-excel"></i> Экспорт</a>
+      {% endif %}
+    </div>
+</div>
+<!-- Фильтры -->
+<form method="get" class="row g-2 mb-3 align-items-end bg-light p-3 rounded-3 shadow-sm">
+  <div class="col-md-2">
+    <label class="form-label">ТС</label>
+    <select name="vehicle" class="form-select">
+      <option value="">Все</option>
+      {% for v in vehicles %}
+        <option value="{{v.id}}" {% if filter.vehicle_id|default:'' == v.id|stringformat:'s' %}selected{% endif %}>{{v}}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2">
+    <label class="form-label">Оборудование</label>
+    <select name="equipment" class="form-select">
+      <option value="">Все</option>
+      {% for e in equipment_list %}
+        <option value="{{e.id}}" {% if filter.equipment_id|default:'' == e.id|stringformat:'s' %}selected{% endif %}>{{e}}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2">
+    <label class="form-label">Тип</label>
+    <select name="type" class="form-select">
+      <option value="">Все</option>
+      <option value="maintenance" {% if filter.type == 'maintenance' %}selected{% endif %}>ТО</option>
+      <option value="repair" {% if filter.type == 'repair' %}selected{% endif %}>Ремонт</option>
+    </select>
+  </div>
+  <div class="col-md-2">
+    <label class="form-label">Статус</label>
+    <select name="status" class="form-select">
+      <option value="">Все</option>
+      <option value="planned" {% if filter.status == 'planned' %}selected{% endif %}>Запланировано</option>
+      <option value="in_progress" {% if filter.status == 'in_progress' %}selected{% endif %}>В работе</option>
+      <option value="done" {% if filter.status == 'done' %}selected{% endif %}>Выполнено</option>
+      <option value="cancelled" {% if filter.status == 'cancelled' %}selected{% endif %}>Отменено</option>
+      <option value="postponed" {% if filter.status == 'postponed' %}selected{% endif %}>Отложено</option>
+    </select>
+  </div>
+  <div class="col-md-2">
+    <label class="form-label">Ответственный</label>
+    <select name="responsible" class="form-select">
+      <option value="">Все</option>
+      {% for r in responsibles %}
+        <option value="{{r}}" {% if filter.responsible == r %}selected{% endif %}>{{r}}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2">
+    <label class="form-label">Дата с</label>
+    <input type="date" name="date_from" class="form-control" value="{{filter.date_from|default:''}}">
+  </div>
+  <div class="col-md-2">
+    <label class="form-label">Дата по</label>
+    <input type="date" name="date_to" class="form-control" value="{{filter.date_to|default:''}}">
+  </div>
+  <div class="col-md-2">
+    <button type="submit" class="btn btn-outline-primary w-100"><i class="bi bi-funnel"></i> Фильтровать</button>
+  </div>
+  <div class="col-md-2">
+    <a href="?" class="btn btn-outline-secondary w-100"><i class="bi bi-x-lg"></i> Сбросить</a>
+  </div>
+</form>
+<table class="table table-hover table-bordered align-middle shadow-sm bg-white w-100" id="maintenance-table">
+    <thead class="table-primary text-center align-middle">
+        <tr>
+            <th class="text-center sortable" data-sort="date"><i class="bi bi-calendar"></i> Дата <span class="sort-indicator"></span></th>
+            <th class="text-center sortable" data-sort="type"><i class="bi bi-tools"></i> Тип <span class="sort-indicator"></span></th>
+            <th class="text-center sortable" data-sort="vehicle"><i class="bi bi-truck"></i> ТС <span class="sort-indicator"></span></th>
+            <th class="text-center sortable" data-sort="equipment"><i class="bi bi-gear"></i> Оборудование <span class="sort-indicator"></span></th>
+            <th class="text-center sortable" data-sort="status"><i class="bi bi-shield-check"></i> Статус <span class="sort-indicator"></span></th>
+            <th class="text-center sortable" data-sort="mileage">Пробег/наработка <span class="sort-indicator"></span></th>
+            <th class="text-center sortable" data-sort="responsible">Ответственный <span class="sort-indicator"></span></th>
+            <th class="text-center">Действия</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for r in records %}
+        <tr class="table-row-detail text-center" style="cursor:pointer;" data-href="{% url 'maintenance_detail' r.pk %}">
+            <td>{{ r.date|date:'d.m.Y' }}</td>
+            <td>{% if r.type == 'maintenance' %}<span class="badge bg-info">ТО</span>{% else %}<span class="badge bg-danger">Ремонт</span>{% endif %}</td>
+            <td>{% if r.vehicle %}<a href="{% url 'vehicle_detail' r.vehicle.pk %}" onclick="event.stopPropagation();">{{ r.vehicle }}</a>{% else %}—{% endif %}</td>
+            <td>{% if r.equipment %}<a href="{% url 'equipment_detail' r.equipment.pk %}" onclick="event.stopPropagation();">{{ r.equipment }}</a>{% else %}—{% endif %}</td>
+            <td>{% if r.status == 'planned' %}<span class="badge bg-warning text-dark">Запланировано</span>{% elif r.status == 'done' %}<span class="badge bg-success">Выполнено</span>{% elif r.status == 'in_progress' %}<span class="badge bg-primary">В работе</span>{% elif r.status == 'cancelled' %}<span class="badge bg-danger">Отменено</span>{% else %}<span class="badge bg-secondary">Отложено</span>{% endif %}</td>
+            <td>{{ r.mileage|default:'—' }}</td>
+            <td>{{ r.responsible }}</td>
+            <td>
+              {% if perms.TS_equipment.change_maintenancerecord or user.is_superuser %}
+                {% if r.status != 'done' %}
+                  <form method="post" action="{% url 'maintenance_mark_done' r.pk %}" style="display:inline;" class="mark-done-form">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-success" title="Отметить как выполнено" onclick="event.stopPropagation();"><i class="bi bi-check2-circle"></i> Выполнено</button>
+                  </form>
+                {% endif %}
+                <a href="{% url 'maintenance_edit' r.pk %}" class="btn btn-sm btn-outline-primary" title="Редактировать" onclick="event.stopPropagation();"><i class="bi bi-pencil"></i></a>
+              {% endif %}
+              <a href="{% url 'maintenance_detail' r.pk %}" class="btn btn-sm btn-outline-info" title="Просмотр" onclick="event.stopPropagation();"><i class="bi bi-eye"></i></a>
+              {% if perms.TS_equipment.delete_maintenancerecord or user.is_superuser %}
+                <a href="{% url 'maintenance_delete' r.pk %}" class="btn btn-sm btn-outline-danger" title="Удалить" onclick="event.stopPropagation();"><i class="bi bi-trash"></i></a>
+              {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" class="text-center text-muted">Нет записей</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- История ремонтов и ТО -->
+<h3 class="mt-5 mb-3"><i class="bi bi-tools"></i> История ремонтов и ТО</h3>
+<form method="get" class="row g-2 mb-3 align-items-end bg-light p-3 rounded-3 shadow-sm">
+  <div class="col-md-2">
+    <label class="form-label">ТС</label>
+    <select name="repair_vehicle" class="form-select">
+      <option value="">Все</option>
+      {% for v in vehicles %}
+        <option value="{{v.id}}" {% if repair_filter.repair_vehicle_id|default:'' == v.id|stringformat:'s' %}selected{% endif %}>{{v}}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2">
+    <label class="form-label">Оборудование</label>
+    <select name="repair_equipment" class="form-select">
+      <option value="">Все</option>
+      {% for e in equipment_list %}
+        <option value="{{e.id}}" {% if repair_filter.repair_equipment_id|default:'' == e.id|stringformat:'s' %}selected{% endif %}>{{e}}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2">
+    <label class="form-label">Ответственный</label>
+    <select name="repair_responsible" class="form-select">
+      <option value="">Все</option>
+      {% for r in repair_responsibles %}
+        <option value="{{r}}" {% if repair_filter.repair_responsible == r %}selected{% endif %}>{{r}}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2">
+    <label class="form-label">Дата с</label>
+    <input type="date" name="repair_date_from" class="form-control" value="{{repair_filter.repair_date_from|default:''}}">
+  </div>
+  <div class="col-md-2">
+    <label class="form-label">Дата по</label>
+    <input type="date" name="repair_date_to" class="form-control" value="{{repair_filter.repair_date_to|default:''}}">
+  </div>
+  <div class="col-md-2 d-flex gap-2">
+    <button type="submit" class="btn btn-outline-primary w-100"><i class="bi bi-funnel"></i> Фильтровать</button>
+    <button type="submit" name="repair_export" value="excel" class="btn btn-outline-success w-100" title="Экспортировать в Excel"><i class="bi bi-file-earmark-excel"></i> Экспорт</button>
+  </div>
+</form>
+<table class="table table-hover table-bordered align-middle shadow-sm bg-white w-100" id="repair-history-table">
+    <thead class="table-secondary text-center align-middle">
+        <tr>
+            <th class="text-center"><i class="bi bi-calendar"></i> Дата</th>
+            <th class="text-center"><i class="bi bi-truck"></i> ТС</th>
+            <th class="text-center"><i class="bi bi-gear"></i> Оборудование</th>
+            <th class="text-center"><i class="bi bi-person"></i> Ответственный</th>
+            <th class="text-center"><i class="bi bi-shield-check"></i> Статус</th>
+            <th class="text-center">Пробег/наработка</th>
+            <th class="text-center">Описание</th>
+            <th class="text-center">Документ</th>
+            <th class="text-center">Действия</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for r in repair_history %}
+        <tr class="text-center">
+            <td>{{ r.date|date:'d.m.Y' }}</td>
+            <td>{% if r.vehicle %}<a href="{% url 'vehicle_detail' r.vehicle.pk %}">{{ r.vehicle }}</a>{% else %}—{% endif %}</td>
+            <td>{% if r.equipment %}<a href="{% url 'equipment_detail' r.equipment.pk %}">{{ r.equipment }}</a>{% else %}—{% endif %}</td>
+            <td>{{ r.responsible }}</td>
+            <td>{% if r.status == 'done' %}<span class="badge bg-success">Выполнено</span>{% else %}<span class="badge bg-secondary">{{ r.get_status_display }}</span>{% endif %}</td>
+            <td>{{ r.mileage|default:'—' }}</td>
+            <td style="max-width:300px; word-break:break-word; white-space:pre-line;">{{ r.description|default:'—' }}</td>
+            <td>{% if r.file %}<a href="{{ r.file.url }}" target="_blank"><i class="bi bi-paperclip"></i> Скачать</a>{% else %}—{% endif %}</td>
+            <td>
+                <a href="{% url 'repair_history_detail' r.pk %}" class="btn btn-sm btn-outline-info" title="Просмотр"><i class="bi bi-eye"></i></a>
+                <form method="post" action="{% url 'repair_history_delete' r.pk %}" style="display:inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-outline-danger" title="Удалить" onclick="return confirm('Удалить запись из истории ремонтов?');"><i class="bi bi-trash"></i></button>
+                </form>
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="9" class="text-center text-muted">Нет завершённых ремонтов</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.table-row-detail').forEach(function(row) {
+      row.addEventListener('click', function(e) {
+        if (!e.target.closest('a,button')) {
+          window.location.href = row.getAttribute('data-href');
+        }
+      });
+    });
+    // Сортировка таблицы ТОиР
+    function compareRows(a, b, idx, type, asc) {
+      let v1 = a.children[idx].innerText.trim();
+      let v2 = b.children[idx].innerText.trim();
+      if(type === 'number') {
+        v1 = parseFloat(v1.replace(/[^\d.]/g, '')) || 0;
+        v2 = parseFloat(v2.replace(/[^\d.]/g, '')) || 0;
+      }
+      if(type === 'string') {
+        v1 = v1.toLowerCase();
+        v2 = v2.toLowerCase();
+      }
+      if(v1 < v2) return asc ? -1 : 1;
+      if(v1 > v2) return asc ? 1 : -1;
+      return 0;
+    }
+    const table = document.getElementById('maintenance-table');
+    const headers = table.querySelectorAll('th.sortable');
+    let sortState = {};
+    headers.forEach((th, idx) => {
+      th.addEventListener('click', function() {
+        let type = 'string';
+        if(['mileage'].includes(th.dataset.sort)) type = 'number';
+        const asc = !sortState[idx];
+        sortState = {}; sortState[idx] = asc;
+        table.querySelectorAll('span.sort-indicator').forEach(s => s.innerHTML = '');
+        th.querySelector('span.sort-indicator').innerHTML = asc ? '▲' : '▼';
+        const rows = Array.from(table.tBodies[0].rows).filter(r => !r.classList.contains('text-muted'));
+        rows.sort((a, b) => compareRows(a, b, idx, type, asc));
+        rows.forEach(r => table.tBodies[0].appendChild(r));
+      });
+    });
+
+    document.querySelectorAll('.mark-done-form').forEach(function(form) {
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (!confirm('Отметить как выполнено?')) return;
+        const formData = new FormData(form);
+        fetch(form.action, {
+          method: 'POST',
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          body: formData
+        })
+        .then(resp => {
+          if (resp.redirected || resp.ok) {
+            window.location.reload();
+          } else {
+            alert('Ошибка при выполнении операции!');
+          }
+        })
+        .catch(() => alert('Ошибка при выполнении операции!'));
+      });
+    });
+  });
+</script>
+{% endblock %}
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Главная</a></li>
+<li class="breadcrumb-item active" aria-current="page">ТОиР</li>
+{% endblock %}

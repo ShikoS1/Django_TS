@@ -1,0 +1,9 @@
+{% extends 'TS_equipment/base.html' %}
+{% block content %}
+<h2>Тест отправки почты</h2>
+<p>Нажмите кнопку, чтобы отправить тестовое письмо на ваш email (или EMAIL_HOST_USER).</p>
+<form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-primary">Отправить тестовое письмо</button>
+</form>
+{% endblock %}

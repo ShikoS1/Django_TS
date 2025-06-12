@@ -1,0 +1,47 @@
+{% extends "TS_equipment/base.html" %}
+{% block title %}Опломбировать оборудование{% endblock %}
+{% block content %}
+<div class="col-md-6 mx-auto">
+    <h2 class="mb-3">Опломбировать оборудование</h2>
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5>{{ equipment.name }} <span class="text-muted">({{ equipment.serial_number }})</span></h5>
+            {% if messages %}
+              {% for message in messages %}
+                <div class="alert alert-success">{{ message }}</div>
+              {% endfor %}
+            {% endif %}
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">{{ form.non_field_errors|join:', ' }}</div>
+            {% endif %}
+            <form method="post">
+                {% csrf_token %}
+                {{ form.hidden_fields }}
+                <div class="mb-3">
+                    {{ form.seal_datetime.label_tag }}
+                    {{ form.seal_datetime|default_if_none:'' }}
+                    {% if form.seal_datetime.errors %}
+                        <div class="alert alert-danger mt-1 mb-0 py-1 px-2">{{ form.seal_datetime.errors|join:', ' }}</div>
+                    {% endif %}
+                </div>
+                <div class="mb-3">
+                    {{ form.seal_responsible.label_tag }}
+                    {{ form.seal_responsible|default_if_none:'' }}
+                    {% if form.seal_responsible.errors %}
+                        <div class="alert alert-danger mt-1 mb-0 py-1 px-2">{{ form.seal_responsible.errors|join:', ' }}</div>
+                    {% endif %}
+                </div>
+                <div class="d-grid gap-2 mt-3">
+                    <button type="submit" class="btn btn-success"><i class="bi bi-patch-check"></i> Опломбировать</button>
+                    <a href="{% url 'equipment_list' %}" class="btn btn-outline-secondary">Назад</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'equipment_list' %}">Оборудование</a></li>
+<li class="breadcrumb-item"><a href="{% url 'equipment_detail' equipment.pk %}">{{ equipment.name }}</a></li>
+<li class="breadcrumb-item active" aria-current="page">Опломбировать</li>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "admin/base.html" %}
+{% load static %}
+{% block extrastyle %}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/admin_white.css' %}">
+{% endblock %}
+{% block title %}Панель управления оборудованием{% endblock %}
+{% block branding %}
+    <h1 id="site-name">Панель управления оборудованием</h1>
+{% endblock %}
+{% block nav-global %}
+    <div id="user-tools">{{ user.get_username }} | <a href="/logout/">Выйти</a></div>
+{% endblock %}

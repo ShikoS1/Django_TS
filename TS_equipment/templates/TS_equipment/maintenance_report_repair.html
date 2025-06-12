@@ -1,0 +1,44 @@
+{% extends "TS_equipment/base.html" %}
+{% block title %}Отчет по ремонтам{% endblock %}
+{% block content %}
+<div class="container py-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2><i class="bi bi-tools"></i> Отчет по ремонтам</h2>
+        <a href="?export=excel" class="btn btn-outline-success" data-bs-toggle="tooltip" title="Экспортировать в Excel"><i class="bi bi-file-earmark-excel"></i> Скачать Excel</a>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-primary text-center">
+                <tr>
+                    <th>Дата</th>
+                    <th>ТС</th>
+                    <th>Оборудование</th>
+                    <th>Описание работ</th>
+                    <th>Ответственный</th>
+                    <th>Статус</th>
+                    <th>Документ</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in repairs %}
+                <tr>
+                    <td>{{ r.date|date:'d.m.Y' }}</td>
+                    <td>{% if r.vehicle %}<a href="{% url 'vehicle_detail' r.vehicle.pk %}">{{ r.vehicle }}</a>{% else %}—{% endif %}</td>
+                    <td>{% if r.equipment %}<a href="{% url 'equipment_detail' r.equipment.pk %}">{{ r.equipment }}</a>{% else %}—{% endif %}</td>
+                    <td>{{ r.description|default:'—' }}</td>
+                    <td>{{ r.responsible }}</td>
+                    <td>{% if r.status == 'planned' %}<span class="badge bg-warning text-dark">Запланировано</span>{% elif r.status == 'done' %}<span class="badge bg-success">Выполнено</span>{% else %}<span class="badge bg-secondary">Отложено</span>{% endif %}</td>
+                    <td>{% if r.file %}<a href="{{ r.file.url }}" target="_blank"><i class="bi bi-paperclip"></i> Скачать</a>{% else %}—{% endif %}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-center text-muted">Нет ремонтов</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Главная</a></li>
+<li class="breadcrumb-item active" aria-current="page">Отчет по ремонтам</li>
+{% endblock %}

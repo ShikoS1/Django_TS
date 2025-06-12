@@ -1,0 +1,155 @@
+{% extends "TS_equipment/base.html" %}
+{% block title %}Детали ТС{% endblock %}
+{% block content %}
+<div class="card shadow mb-4 glass-card">
+  <div class="card-header bg-primary text-white d-flex align-items-center">
+    <i class="bi bi-truck fs-3 me-2"></i>
+    <h4 class="mb-0">Детальная информация о транспортном средстве</h4>
+  </div>
+  <div class="card-body">
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <dl class="row mb-0">
+          <dt class="col-5">Категория</dt>
+          <dd class="col-7">
+            {% if vehicle.category == 'car' %}<span class="badge bg-primary"><i class="bi bi-car-front"></i> Легковой автомобиль</span>
+            {% elif vehicle.category == 'truck' %}<span class="badge bg-info"><i class="bi bi-truck"></i> Грузовик</span>
+            {% elif vehicle.category == 'bus' %}<span class="badge bg-warning text-dark"><i class="bi bi-bus-front"></i> Автобус</span>
+            {% elif vehicle.category == 'special' %}<span class="badge bg-secondary"><i class="bi bi-gear-wide-connected"></i> Спецтехника</span>
+            {% else %}<span class="badge bg-light text-dark"><i class="bi bi-box"></i> Другое</span>
+            {% endif %}
+          </dd>
+          <dt class="col-5">Гос. номер</dt>
+          <dd class="col-7"><span class="fw-bold fs-5">{{ vehicle.license_plate }}</span></dd>
+          <dt class="col-5">Модель</dt>
+          <dd class="col-7">{{ vehicle.model }}</dd>
+          <dt class="col-5">Производитель</dt>
+          <dd class="col-7">{{ vehicle.manufacturer }}</dd>
+          <dt class="col-5">Год выпуска</dt>
+          <dd class="col-7">{{ vehicle.year }}</dd>
+          <dt class="col-5">VIN</dt>
+          <dd class="col-7">{{ vehicle.vin|default:'—' }}</dd>
+          <dt class="col-5">Цвет</dt>
+          <dd class="col-7">{{ vehicle.color|default:'—' }}</dd>
+          <dt class="col-5">Примечание</dt>
+          <dd class="col-7">{{ vehicle.note|default:'—' }}</dd>
+        </dl>
+      </div>
+      <div class="col-md-6">
+        <div class="mb-3">
+          <span class="fw-bold">Техническое состояние:</span><br>
+          {% if vehicle.repair_date %}
+            <span class="status-badge repair"><i class="bi bi-tools"></i> В ремонте</span><br>
+            <span class="text-muted"><i class="bi bi-calendar"></i> {{ vehicle.repair_date|date:'d.m.Y' }}</span>
+          {% elif vehicle.maintenance_date %}
+            <span class="status-badge maintenance"><i class="bi bi-wrench"></i> На ТО</span><br>
+            <span class="text-muted"><i class="bi bi-calendar"></i> {{ vehicle.maintenance_date|date:'d.m.Y' }}</span>
+          {% else %}
+            <span class="status-badge sealed"><i class="bi bi-check-circle"></i> Исправно</span>
+          {% endif %}
+        </div>
+        <div class="mb-3">
+          <span class="fw-bold">Периодичность ТОиР:</span><br>
+          <span class="badge bg-light text-dark">1 раз в год</span>
+        </div>
+      </div>
+    </div>
+    <hr>
+    <h5 class="mt-4 mb-3"><i class="bi bi-tools"></i> Оборудование, установленное в ТС</h5>
+    {% if vehicle.equipment.all %}
+      <div class="horizontal-scroll">
+        {% for eq in vehicle.equipment.all %}
+        <div class="equipment-mini-card">
+          <div class="d-flex align-items-center mb-2">
+            <i class="bi bi-tools fs-5 me-2"></i>
+            <span class="fw-bold">{{ eq.name }}</span>
+          </div>
+          <div class="mb-1"><span class="text-muted">Серийный №:</span> {{ eq.serial_number }}</div>
+          <div class="mb-1"><span class="text-muted">Категория:</span> {{ eq.get_category_display }}</div>
+          <div class="mb-1"><span class="text-muted">Статус:</span>
+            {% if eq.seal_datetime and not eq.unseal_datetime %}
+              <span class="badge bg-success"><i class="bi bi-patch-check"></i> Пломбировано</span>
+            {% elif eq.unseal_datetime %}
+              <span class="badge bg-danger"><i class="bi bi-x-circle"></i> Снята пломба</span>
+            {% else %}
+              <span class="badge bg-secondary"><i class="bi bi-dash-circle"></i> Без пломбы</span>
+            {% endif %}
+          </div>
+          <a href="{% url 'equipment_detail' eq.pk %}" class="btn btn-sm btn-outline-primary mt-2"><i class="bi bi-arrow-right"></i> Подробнее</a>
+        </div>
+        {% empty %}
+        <div class="text-muted">Нет оборудования</div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <span class="text-muted">Нет оборудования</span>
+    {% endif %}
+    <hr class="my-4">
+    <!-- Журнал изменений ТС -->
+    <div class="glass-card mt-4 p-0">
+      <div class="card-header bg-light fw-bold py-3 px-4">
+        <i class="bi bi-clock-history"></i> Журнал изменений ТС
+      </div>
+      <div class="card-body p-4">
+        {% if logs and logs.exists %}
+          <div class="table-responsive">
+            <table class="table table-sm table-bordered mb-0" style="table-layout: fixed; width: 100%;">
+              <colgroup>
+                <col style="width: 130px;">
+                <col style="width: 140px;">
+                <col style="width: 120px;">
+                <col style="width: auto;">
+                <col style="width: 50px;">
+              </colgroup>
+              <thead class="table-light">
+                <tr>
+                  <th>Дата и время</th>
+                  <th>Операция</th>
+                  <th>Пользователь</th>
+                  <th>Детали</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for log in logs %}
+                <tr>
+                  <td>{{ log.timestamp|date:'d.m.Y H:i' }}</td>
+                  <td>{{ log.action }}</td>
+                  <td>{{ log.user|default:'—' }}</td>
+                  <td style="white-space: pre-line; word-break: break-word;">{{ log.details|default:'—' }}</td>
+                  <td class="text-center">
+                    {% if perms.TS_equipment.delete_vehiclelog or user.is_superuser %}
+                    <form method="post" action="{% url 'vehicle_log_delete' log.id %}" style="display:inline;">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn-sm btn-outline-danger" title="Удалить" onclick="return confirm('Удалить запись журнала?');"><i class="bi bi-trash"></i></button>
+                    </form>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-muted text-center">Нет записей</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="text-muted">Нет записей в журнале изменений.</div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="mt-4">
+      {% if perms.TS_equipment.change_vehicle or user.is_superuser %}
+      <a href="{% url 'vehicle_edit' vehicle.pk %}" class="btn btn-outline-primary me-2"><i class="bi bi-pencil"></i> Редактировать</a>
+      {% endif %}
+      <a href="{% url 'vehicle_list' %}" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Назад</a>
+      {% if perms.TS_equipment.delete_vehicle or user.is_superuser %}
+      <a href="{% url 'vehicle_delete' vehicle.pk %}" class="btn btn-outline-danger"><i class="bi bi-trash"></i> Удалить</a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'vehicle_list' %}">Транспортные средства</a></li>
+<li class="breadcrumb-item active" aria-current="page">{{ vehicle.license_plate }}</li>
+{% endblock %}

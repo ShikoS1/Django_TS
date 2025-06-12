@@ -1,0 +1,142 @@
+{% extends "TS_equipment/base.html" %}
+{% block title %}Детали оборудования{% endblock %}
+{% block content %}
+<div class="glass-card mb-4 p-0 overflow-hidden">
+  <div class="card-header bg-primary text-white d-flex align-items-center py-3 px-4">
+    <i class="bi bi-tools fs-2 me-3"></i>
+    <div>
+      <h4 class="mb-0">Детальная информация об оборудовании</h4>
+      <div class="small text-white-50">ID: {{ equipment.pk }}</div>
+    </div>
+  </div>
+  <div class="card-body p-4">
+    <div class="row g-4 align-items-center">
+      <div class="col-md-6">
+        <h5 class="mb-3"><i class="bi bi-tag"></i> <b>{{ equipment.name }}</b></h5>
+        <div class="mb-2">
+          <span class="badge bg-secondary me-2"><i class="bi bi-123"></i> Серийный номер:</span>
+          <span class="fw-semibold">{{ equipment.serial_number }}</span>
+        </div>
+        <div class="mb-2">
+          <span class="badge bg-info text-dark me-2"><i class="bi bi-layers"></i> Категория:</span>
+          <span class="fw-semibold">{{ equipment.get_category_display }}</span>
+        </div>
+        <div class="mb-2">
+          <span class="badge bg-light text-dark me-2"><i class="bi bi-card-text"></i> Описание:</span>
+          <span class="fw-normal">{{ equipment.description|default:'—' }}</span>
+        </div>
+        <div class="mb-2">
+          <span class="badge bg-light text-dark me-2"><i class="bi bi-truck"></i> Транспортное средство:</span>
+          {% if equipment.installed_in %}
+            <a href="{% url 'vehicle_detail' equipment.installed_in.pk %}" class="fw-semibold text-decoration-underline">{{ equipment.installed_in }}</a>
+          {% else %}
+            <span class="text-muted">—</span>
+          {% endif %}
+        </div>
+        <div class="mb-2">
+          <span class="badge bg-light text-dark me-2"><i class="bi bi-calendar"></i> Дата установки:</span>
+          <span>{{ equipment.installed_date|date:'d.m.Y'|default:'—' }}</span>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="mb-2">
+          <span class="badge bg-light text-dark me-2"><i class="bi bi-calendar-check"></i> Пломбирование:</span>
+          {% if equipment.seal_datetime and not equipment.unseal_datetime %}
+            <span class="status-badge sealed"><i class="bi bi-patch-check"></i> Пломбировано</span><br>
+            <span class="small text-muted"><i class="bi bi-calendar-check"></i> {{ equipment.seal_datetime|date:'d.m.Y H:i' }}<br>{{ equipment.seal_responsible }}</span>
+          {% elif equipment.unseal_datetime %}
+            <span class="status-badge unsealed"><i class="bi bi-x-circle"></i> Снята пломба</span><br>
+            <span class="small text-muted"><i class="bi bi-calendar-x"></i> {{ equipment.unseal_datetime|date:'d.m.Y H:i' }}<br>{{ equipment.unseal_responsible }}</span><br>
+            <span class="text-muted">{{ equipment.unseal_reason }}</span>
+          {% else %}
+            <span class="status-badge"><i class="bi bi-dash-circle"></i> Без пломбы</span>
+          {% endif %}
+        </div>
+        <div class="mb-2">
+          <span class="badge bg-light text-dark me-2"><i class="bi bi-calendar-event"></i> Дата последнего ТО:</span>
+          <span>{{ equipment.maintenance_date|date:'d.m.Y'|default:'—' }}</span>
+        </div>
+        <div class="mb-2">
+          <span class="badge bg-light text-dark me-2"><i class="bi bi-repeat"></i> Периодичность ТОиР:</span>
+          <span>1 раз в год</span>
+        </div>
+        <div class="mb-2">
+          <span class="badge bg-light text-dark me-2"><i class="bi bi-activity"></i> Исправность:</span>
+          {% if equipment.is_operable == 'operable' %}
+            <span class="status-badge sealed"><i class="bi bi-check-circle"></i> Исправно</span>
+          {% elif equipment.is_operable == 'in_repair' %}
+            <span class="status-badge repair"><i class="bi bi-tools"></i> В ремонте</span>
+          {% elif equipment.is_operable == 'faulty' %}
+            <span class="status-badge faulty"><i class="bi bi-exclamation-triangle"></i> Неисправно</span>
+          {% elif equipment.is_operable == 'on_maintenance' %}
+            <span class="status-badge maintenance"><i class="bi bi-wrench"></i> На ТО</span>
+          {% else %}
+            <span class="status-badge"><i class="bi bi-question-circle"></i> Не определено</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <hr class="my-4">
+    <div class="d-flex flex-wrap gap-2">
+      {% if perms.TS_equipment.change_equipment or user.is_superuser %}
+      <a href="{% url 'equipment_edit' equipment.pk %}" class="btn btn-outline-primary"><i class="bi bi-pencil"></i> Редактировать</a>
+      {% endif %}
+      <a href="{% url 'equipment_list' %}" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> К списку</a>
+      {% if perms.TS_equipment.delete_equipment or user.is_superuser %}
+      <a href="{% url 'equipment_delete' equipment.pk %}" class="btn btn-outline-danger"><i class="bi bi-trash"></i> Удалить</a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+<!-- Журнал изменений -->
+<div class="glass-card mt-4 p-0">
+  <div class="card-header bg-light fw-bold py-3 px-4">
+    <i class="bi bi-clock-history"></i> Журнал изменений
+  </div>
+  <div class="card-body p-4">
+    {% if equipment.logs.all %}
+      <div class="table-responsive">
+        <table class="table table-sm table-bordered mb-0" style="table-layout: fixed; width: 100%;">
+          <colgroup>
+            <col style="width: 130px;">
+            <col style="width: 140px;">
+            <col style="width: auto;">
+            <col style="width: 60px;">
+          </colgroup>
+          <thead class="table-light">
+            <tr>
+              <th>Дата и время</th>
+              <th>Операция</th>
+              <th>Детали</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for log in equipment.logs.all %}
+            <tr>
+              <td>{{ log.timestamp|date:'d.m.Y H:i' }}</td>
+              <td>{{ log.action }}</td>
+              <td style="white-space: pre-line; word-break: break-word;">{{ log.details|default:'—' }}</td>
+              <td class="text-center">
+                <form method="post" action="{% url 'equipment_log_delete' log.id %}" style="display:inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-outline-danger" title="Удалить" onclick="return confirm('Удалить запись журнала?');"><i class="bi bi-trash"></i></button>
+                </form>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-muted text-center">Нет записей</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="text-muted">Нет записей в журнале изменений.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'equipment_list' %}">Оборудование</a></li>
+<li class="breadcrumb-item active" aria-current="page">{{ equipment.name }}</li>
+{% endblock %}

@@ -1,0 +1,262 @@
+{% load show_message %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Учет оборудования ТС - {% block title %}{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="/static/css/styles.css" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
+    <style>
+        .main-navbar {
+            background: linear-gradient(90deg, #005b9f 0%, #0074d9 100%);
+            box-shadow: 0 4px 24px rgba(0,91,159,0.10);
+        }
+        .main-navbar .navbar-brand img {
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,91,159,0.10);
+        }
+        .main-navbar .nav-link.active, .main-navbar .nav-link:hover {
+            color: #ffd700 !important;
+            background: rgba(255,255,255,0.08);
+            border-radius: 8px;
+        }
+        .main-navbar .nav-link {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #fff !important;
+            transition: background 0.2s, color 0.2s;
+        }
+        .main-navbar .dropdown-menu {
+            min-width: 180px;
+        }
+        .main-navbar .btn-outline-light {
+            border-radius: 8px;
+        }
+        .main-navbar .dropdown-toggle::after {
+            margin-left: 0.5em;
+        }
+        .main-navbar .navbar-toggler {
+            border: none;
+        }
+        .main-navbar .navbar-toggler:focus {
+            box-shadow: none;
+        }
+        .main-navbar .navbar-brand {
+            font-weight: bold;
+            font-size: 1.3rem;
+            letter-spacing: 1px;
+        }
+        .main-navbar .navbar-nav {
+            gap: 0.5rem;
+        }
+        .main-navbar .dropdown-item:active {
+            background: #005b9f;
+            color: #fff;
+        }
+        .main-navbar .dropdown-item {
+            font-size: 1rem;
+        }
+        .main-navbar .btn-outline-light {
+            font-weight: 500;
+        }
+        .main-navbar .bi {
+            vertical-align: -.15em;
+        }
+        .main-navbar .navbar-collapse {
+            justify-content: flex-end;
+        }
+        .main-navbar .dropdown-menu {
+            border-radius: 10px;
+        }
+        .main-navbar .dropdown-divider {
+            margin: 0.3rem 0;
+        }
+        .main-navbar .dropdown-item {
+            padding: 0.5rem 1.2rem;
+        }
+        .main-navbar .dropdown-item i {
+            margin-right: 0.5em;
+        }
+        .main-navbar .btn-outline-light {
+            border-width: 2px;
+        }
+        .main-navbar .navbar-brand img {
+            height: 36px;
+        }
+        .main-navbar .navbar-brand {
+            display: flex;
+            align-items: center;
+        }
+        .main-navbar .navbar-brand span {
+            margin-left: 0.5em;
+        }
+        .main-navbar .navbar {
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem;
+        }
+        .main-navbar .navbar-nav .nav-link {
+            padding: 0.5rem 1.1rem;
+        }
+        .main-navbar .navbar-nav .nav-link i {
+            margin-right: 0.4em;
+        }
+        .main-navbar .navbar-nav .nav-link.active {
+            font-weight: 600;
+        }
+        .main-navbar .navbar-nav .nav-link {
+            border-radius: 8px;
+        }
+        .main-navbar .navbar-nav .nav-link:focus {
+            outline: none;
+        }
+        .main-navbar .navbar-nav .nav-link {
+            transition: background 0.2s, color 0.2s;
+        }
+        .main-navbar .navbar-nav .nav-link {
+            margin-right: 0.2em;
+        }
+        .main-navbar .navbar-nav .nav-link:last-child {
+            margin-right: 0;
+        }
+        .main-navbar .navbar-collapse {
+            flex-grow: 0;
+        }
+        @media (max-width: 991.98px) {
+            .main-navbar .navbar-nav .nav-link {
+                padding: 0.5rem 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Навигационная панель -->
+    <nav class="navbar navbar-expand-lg main-navbar">
+        <div class="custom-container px-4">
+            <a class="navbar-brand d-flex align-items-center" href="{% url 'dashboard' %}">
+                <div class="d-flex align-items-center">
+                    <div class="bg-white rounded-3 p-2 me-3 d-flex align-items-center" style="height:48px;">
+                        <img src="/static/img/Logo.png" alt="Транснефть-Восток" style="height:32px;">
+                    </div>
+                    <span class="fs-3 fw-bold" style="color:#ffffff;">Учет оборудования</span>
+                </div>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">
+                            <i class="bi bi-house-door"></i> Главная
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'vehicle' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'vehicle_list' %}">
+                            <i class="bi bi-truck"></i> Транспорт
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'equipment' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'equipment_list' %}">
+                            <i class="bi bi-tools"></i> Оборудование
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'maintenance' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'maintenance_list' %}">
+                            <i class="bi bi-wrench"></i> ТОиР
+                        </a>
+                    </li>
+                </ul>
+                <div class="d-flex">
+                    <div class="dropdown ms-2">
+                        <button class="btn btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-bar-chart"></i> Отчеты
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'report_equipment_list' %}"><i class="bi bi-list-check"></i> Список оборудования</a></li>
+                            <li><a class="dropdown-item" href="{% url 'report_vehicle_equipment' %}"><i class="bi bi-truck"></i> Оборудование по ТС</a></li>
+                        </ul>
+                    </div>
+                    {% if user.is_authenticated %}
+                        <div class="dropdown">
+                            <button class="btn btn-outline-light dropdown-toggle" type="button" id="userMenu" data-bs-toggle="dropdown">
+                                <i class="bi bi-person-circle"></i> {{ user.username }}
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="{% url 'admin:index' %}"><i class="bi bi-speedometer2"></i> Админ-панель</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a href="/login/" class="dropdown-item" style="width:100%;text-align:left;">
+                                        <i class="bi bi-box-arrow-right"></i> Выйти
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="btn btn-outline-light">
+                            <i class="bi bi-box-arrow-in-right"></i> Войти
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+    <main class="custom-container main-content">
+        {% block breadcrumbs %}
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb bg-white bg-opacity-75 rounded-3 px-3 py-2 mb-4 shadow-sm">
+                <li class="breadcrumb-item"><a href="{% url 'dashboard' %}"><i class="bi bi-house-door"></i></a></li>
+                {% block breadcrumb_items %}{% endblock %}
+            </ol>
+        </nav>
+        {% endblock %}
+        {% block page_header %}
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="fw-bold text-primary-emphasis" style="letter-spacing:0.5px;">{% block page_title %}{% endblock %}</h1>
+            {% block page_actions %}{% endblock %}
+        </div>
+        {% endblock %}
+        <div class="card border-0 shadow-sm bg-white bg-opacity-75 rounded-4 mb-4 p-0">
+            <div class="card-body p-0">
+                {% if messages %}
+                  <div class="container pt-3">
+                    {% for message in messages %}
+                      {# Use a custom filter to check if the message should be shown on this page #}
+                      {% if message|show_message:request %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                          {{ message }}
+                          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Закрыть"></button>
+                        </div>
+                      {% endif %}
+                    {% endfor %}
+                  </div>
+                {% endif %}
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% if request.path != '/login/' %}
+    <script>
+    // Автоматический выход при неактивности 5 минут
+    (function() {
+        var timeout = 300000;
+        var timer;
+        function resetTimer() {
+            clearTimeout(timer);
+            timer = setTimeout(function() {
+                window.location.href = '/login/';
+            }, timeout);
+        }
+        ['mousemove', 'keydown', 'mousedown', 'touchstart'].forEach(function(event) {
+            document.addEventListener(event, resetTimer, true);
+        });
+        resetTimer();
+    })();
+    </script>
+    {% endif %}
+    {% block extra_js %}{% endblock %}
+  </body>
+</html>

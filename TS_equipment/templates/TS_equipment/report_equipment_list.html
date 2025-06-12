@@ -1,0 +1,120 @@
+{% extends "TS_equipment/base.html" %}
+{% block title %}Отчет: Список оборудования{% endblock %}
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Главная</a></li>
+<li class="breadcrumb-item active" aria-current="page">Отчёт: Список оборудования</li>
+{% endblock %}
+{% block content %}
+<div class="container py-3">
+    <div class="d-flex justify-content-end mb-3 gap-2">
+        <a href="?export=excel" class="btn btn-outline-success" data-bs-toggle="tooltip" data-bs-placement="top" title="Экспортировать в Excel"><i class="bi bi-file-earmark-excel"></i> Скачать Excel</a>
+        <a href="?export=html" class="btn btn-outline-primary" data-bs-toggle="tooltip" data-bs-placement="top" title="Экспортировать в HTML"><i class="bi bi-file-earmark-text"></i> Скачать HTML</a>
+    </div>
+    <div class="row mb-4 g-3">
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body text-center">
+                    <div class="fs-1 mb-2 text-primary"><i class="bi bi-patch-check" data-bs-toggle="tooltip" title="Оборудование с установленной пломбой"></i></div>
+                    <div class="fw-bold">Пломбировано</div>
+                    <div class="display-6">
+                        {{ sealed_count }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body text-center">
+                    <div class="fs-1 mb-2 text-danger"><i class="bi bi-x-circle" data-bs-toggle="tooltip" title="Пломба снята"></i></div>
+                    <div class="fw-bold">Снята пломба</div>
+                    <div class="display-6">
+                        {{ unsealed_count }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body text-center">
+                    <div class="fs-1 mb-2 text-secondary"><i class="bi bi-dash-circle" data-bs-toggle="tooltip" title="Оборудование без пломбы"></i></div>
+                    <div class="fw-bold">Без пломбы</div>
+                    <div class="display-6">
+                        {{ no_seal_count }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="report-table-container mb-4">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-primary text-center">
+                    <tr>
+                        <th>Название</th>
+                        <th>Серийный номер</th>
+                        <th>ТС</th>
+                        <th>Статус пломбы</th>
+                        <th>Периодичность ТОиР</th>
+                        <th>Дата последнего ТО</th>
+                        <th>Исправность</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for e in equipment %}
+                    <tr class="table-row-detail" style="cursor:pointer;" data-href="{% url 'equipment_detail' e.pk %}">
+                        <td>{{ e.name }}</td>
+                        <td>{{ e.serial_number }}</td>
+                        <td>{% if e.installed_in %}{{ e.installed_in }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
+                        <td>
+                            {% if e.seal_datetime and not e.unseal_datetime %}
+                                <span class="badge bg-success" data-bs-toggle="tooltip" title="Пломба установлена"><i class="bi bi-patch-check"></i> Пломбировано</span>
+                            {% elif e.unseal_datetime %}
+                                <span class="badge bg-danger" data-bs-toggle="tooltip" title="Пломба снята"><i class="bi bi-x-circle"></i> Снята пломба</span>
+                            {% else %}
+                                <span class="badge bg-secondary" data-bs-toggle="tooltip" title="Пломба не установлена"><i class="bi bi-dash-circle"></i> Без пломбы</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if e.maintenance_date %}
+                                {% with next_maintenance=e.maintenance_date|add:'365' %}
+                                    1 раз в год
+                                {% endwith %}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td>{% if e.maintenance_date %}{{ e.maintenance_date|date:'d.m.Y' }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
+                        <td>
+                            {% if e.repair_date %}
+                                <span class="badge bg-danger">В ремонте</span>
+                            {% elif e.maintenance_date %}
+                                <span class="badge bg-warning text-dark">На ТО</span>
+                            {% else %}
+                                <span class="badge bg-success">Исправно</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7" class="text-center text-muted">Нет данных</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+      new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    document.querySelectorAll('.table-row-detail').forEach(function(row) {
+      row.addEventListener('click', function(e) {
+        if (!e.target.closest('a,button')) {
+          window.location.href = row.getAttribute('data-href');
+        }
+      });
+    });
+  });
+</script>
+{% endblock %}

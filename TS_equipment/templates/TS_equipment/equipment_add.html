@@ -1,0 +1,40 @@
+{% extends "TS_equipment/base.html" %}
+{% block title %}Добавить/Редактировать оборудование{% endblock %}
+{% block content %}
+<div class="col-md-6 mx-auto">
+    <h2 class="mb-3">{% if edit %}Редактировать оборудование{% else %}Добавить оборудование{% endif %}</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        {{ form.unscheduled_seal_date.label_tag }}
+        {{ form.unscheduled_seal_date }}
+        {{ form.unscheduled_seal_reason.label_tag }}
+        {{ form.unscheduled_seal_reason }}
+        {{ form.maintenance_date.label_tag }}
+        {{ form.maintenance_date }}
+        {{ form.maintenance_reason.label_tag }}
+        {{ form.maintenance_reason }}
+        {{ form.repair_date.label_tag }}
+        {{ form.repair_date }}
+        {{ form.repair_reason.label_tag }}
+        {{ form.repair_reason }}
+        <div class="d-grid gap-2 mt-3">
+            <button type="submit" class="btn btn-primary">{% if edit %}Сохранить изменения{% else %}Добавить{% endif %}</button>
+            <a href="{% url 'equipment_list' %}" class="btn btn-outline-secondary">Назад</a>
+        </div>
+    </form>
+</div>
+<script>
+const dtInput = document.querySelector('input[type="datetime-local"]');
+if (dtInput) {
+    dtInput.addEventListener('change', function() {
+        if (this.value) {
+        }
+    });
+}
+</script>
+{% endblock %}
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'equipment_list' %}">Оборудование</a></li>
+<li class="breadcrumb-item active" aria-current="page">{% if edit %}Редактировать{% else %}Добавить{% endif %}</li>
+{% endblock %}

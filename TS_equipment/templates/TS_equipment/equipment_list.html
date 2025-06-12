@@ -1,0 +1,241 @@
+{% extends "TS_equipment/base.html" %}
+{% block title %}Оборудование{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2><i class="bi bi-tools"></i> Оборудование</h2>
+    <div>
+      {% if perms.TS_equipment.add_equipment or user.is_superuser %}
+        <a href="{% url 'equipment_add' %}" class="btn btn-primary ms-2"><i class="bi bi-plus"></i> Добавить оборудование</a>
+      {% endif %}
+      {% if perms.TS_equipment.can_assign_responsible or perms.TS_equipment.can_set_unplanned_seal or perms.TS_equipment.can_set_maintenance_date or perms.TS_equipment.can_set_repair_date or user.is_superuser %}
+        <a href="?{{ request.GET.urlencode }}&export=excel" class="btn btn-outline-success ms-2" title="Экспортировать в Excel"><i class="bi bi-file-earmark-excel"></i> Экспорт</a>
+        <a href="?{{ request.GET.urlencode }}&export=html" class="btn btn-outline-primary ms-2" title="Экспортировать в HTML"><i class="bi bi-file-earmark-code"></i> Экспорт</a>
+      {% endif %}
+    </div>
+</div>
+{# Уведомления убраны с главной страницы #}
+<form method="get" class="row g-2 mb-3 align-items-end bg-light p-3 rounded-3 shadow-sm">
+  <div class="col-md-2">
+    <label class="form-label">ТС</label>
+    <select name="vehicle" class="form-select">
+      <option value="">Все</option>
+      {% for v in vehicles %}
+        <option value="{{v.id}}" {% if filter.vehicle_id|default:'' == v.id|stringformat:'s' %}selected{% endif %}>{{v}}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2">
+    <label class="form-label">Оборудование</label>
+    <select name="equipment" class="form-select">
+      <option value="">Все</option>
+      {% for e in equipment_list %}
+        <option value="{{e.id}}" {% if filter.equipment_id|default:'' == e.id|stringformat:'s' %}selected{% endif %}>{{e}}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2">
+    <label class="form-label">Тип</label>
+    <select name="type" class="form-select">
+      <option value="">Все</option>
+      <option value="electronics" {% if filter.type == 'electronics' %}selected{% endif %}>Электроника</option>
+      <option value="tool" {% if filter.type == 'tool' %}selected{% endif %}>Инструмент</option>
+      <option value="safety" {% if filter.type == 'safety' %}selected{% endif %}>Безопасность</option>
+      <option value="communication" {% if filter.type == 'communication' %}selected{% endif %}>Связь</option>
+      <option value="other" {% if filter.type == 'other' %}selected{% endif %}>Другое</option>
+    </select>
+  </div>
+  <div class="col-md-2">
+    <label class="form-label">Статус</label>
+    <select name="status" class="form-select">
+      <option value="">Все</option>
+      <option value="sealed" {% if filter.status == 'sealed' %}selected{% endif %}>Пломбировано</option>
+      <option value="unsealed" {% if filter.status == 'unsealed' %}selected{% endif %}>Снята пломба</option>
+      <option value="none" {% if filter.status == 'none' %}selected{% endif %}>Без пломбы</option>
+    </select>
+  </div>
+  <div class="col-md-2">
+    <label class="form-label">Ответственный</label>
+    <select name="responsible" class="form-select">
+      <option value="">Все</option>
+      {% for r in responsibles %}
+        {% if r %}<option value="{{r}}" {% if filter.responsible == r %}selected{% endif %}>{{r}}</option>{% endif %}
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2">
+    <label class="form-label">Дата с</label>
+    <input name="date_from" type="date" class="form-control" value="{{ filter.date_from }}">
+  </div>
+  <div class="col-md-2">
+    <label class="form-label">Дата по</label>
+    <input name="date_to" type="date" class="form-control" value="{{ filter.date_to }}">
+  </div>
+  <div class="col-md-2">
+    <button type="submit" class="btn btn-outline-primary w-100"><i class="bi bi-funnel"></i> Фильтровать</button>
+  </div>
+  <div class="col-md-2">
+    <a href="?" class="btn btn-outline-secondary w-100"><i class="bi bi-x-lg"></i> Сбросить</a>
+  </div>
+</form>
+<div class="equipment-table-container">
+  <div class="table-responsive-sm px-2">
+    <table class="table table-hover table-bordered align-middle shadow-sm bg-white w-100" id="equipment-table">
+        <thead class="table-primary text-center align-middle">
+            <tr>
+                <th class="text-center sortable" data-sort="name"><i class="bi bi-tag"></i> Название <span class="sort-indicator"></span></th>
+                <th class="text-center sortable" data-sort="serial_number"><i class="bi bi-upc-scan"></i> Серийный номер <span class="sort-indicator"></span></th>
+                <th class="text-center sortable" data-sort="category" style="min-width: 180px;"><i class="bi bi-layers"></i> Категория <span class="sort-indicator"></span></th>
+                <th class="text-center sortable" data-sort="description" style="min-width: 320px; max-width: 500px; word-break: break-word; white-space: pre-line;"> <i class="bi bi-card-text"></i> Описание <span class="sort-indicator"></span></th>
+                <th class="text-center sortable" data-sort="installed_in"><i class="bi bi-truck"></i> Установлено в <span class="sort-indicator"></span></th>
+                <th class="text-center sortable" data-sort="installed_date"><i class="bi bi-calendar"></i> Дата установки <span class="sort-indicator"></span></th>
+                <th class="text-center"><i class="bi bi-patch-check"></i> Статус пломбы</th>
+                <th class="text-center"><i class="bi bi-shield-check"></i> Исправность</th>
+                <th class="text-center"><i class="bi bi-gear"></i> Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for e in equipment %}
+            <tr class="table-row-detail align-middle equipment-row" style="cursor:pointer;" data-href="{% url 'equipment_detail' e.pk %}" data-category="{{ e.category }}" data-status="{% if e.seal_datetime and not e.unseal_datetime %}sealed{% elif e.unseal_datetime %}unsealed{% else %}none{% endif %}">
+                <td class="text-center"><strong>{{ e.name }}</strong></td>
+                <td class="text-center">{{ e.serial_number }}</td>
+                <td class="text-center">
+                    {% if e.category == 'electronics' %}<i class="bi bi-cpu"></i> Электроника
+                    {% elif e.category == 'tool' %}<i class="bi bi-wrench"></i> Инструмент
+                    {% elif e.category == 'safety' %}<i class="bi bi-shield-check"></i> Безопасность
+                    {% elif e.category == 'communication' %}<i class="bi bi-broadcast"></i> Связь
+                    {% else %}<i class="bi bi-box"></i> Другое
+                    {% endif %}
+                </td>
+                <td class="text-center" style="max-width: 500px; word-break: break-word; white-space: pre-line;">{{ e.description }}</td>
+                <td class="text-center">
+          {% if e.installed_in %}
+            <span class="badge bg-success"><i class="bi bi-truck"></i> Привязано</span><br>
+            <i class="bi bi-truck"></i> {{ e.installed_in }}<br>
+            {% if perms.TS_equipment.change_equipment and not perms.TS_equipment.can_set_unplanned_seal or user.is_superuser %}
+                <a href="{% url 'unassign_equipment' e.pk %}" class="btn btn-sm btn-outline-warning mt-1"><i class="bi bi-unlink"></i> Снять</a>
+            {% endif %}
+          {% else %}
+            <span class="badge bg-warning text-dark"><i class="bi bi-exclamation-circle"></i> Не установлено</span><br>
+            {% if perms.TS_equipment.change_equipment and not perms.TS_equipment.can_set_unplanned_seal or user.is_superuser %}
+                <a href="{% url 'assign_equipment' e.pk %}" class="btn btn-sm btn-outline-primary mt-1"><i class="bi bi-link-45deg"></i> Установить</a>
+            {% endif %}
+          {% endif %}
+        </td>
+                <td class="text-center">{{ e.installed_date }}</td>
+                <td class="text-center">
+                    {% if e.seal_datetime and not e.unseal_datetime %}
+                        <span class="badge bg-success"><i class="bi bi-patch-check"></i> Пломбировано</span><br>
+                        <i class="bi bi-calendar-check"></i> {{ e.seal_datetime|date:'d.m.Y H:i' }}<br>
+                        <small class="text-muted">{{ e.seal_responsible }}</small>
+                    {% elif e.unseal_datetime %}
+                        <span class="badge bg-danger"><i class="bi bi-x-circle"></i> Снята пломба</span><br>
+                        <i class="bi bi-calendar-x"></i> {{ e.unseal_datetime|date:'d.m.Y H:i' }}<br>
+                        <small class="text-muted">{{ e.unseal_responsible }}</small><br>
+                        <span class="text-muted">{{ e.unseal_reason }}</span>
+                    {% else %}
+                        <span class="badge bg-secondary"><i class="bi bi-dash-circle"></i> Без пломбы</span>
+                    {% endif %}
+                </td>
+                <td class="text-center">
+                  {% if e.is_operable == 'operable' %}
+                    <span class="badge bg-success"><i class="bi bi-check2-circle"></i> Исправно</span>
+                  {% elif e.is_operable == 'in_repair' %}
+                    <span class="badge bg-warning text-dark"><i class="bi bi-tools"></i> В ремонте</span>
+                  {% elif e.is_operable == 'faulty' %}
+                    <span class="badge bg-danger"><i class="bi bi-exclamation-triangle"></i> Неисправно</span>
+                  {% elif e.is_operable == 'on_maintenance' %}
+                    <span class="badge bg-info text-dark"><i class="bi bi-gear"></i> На ТО</span>
+                  {% else %}
+                    <span class="badge bg-secondary"><i class="bi bi-question-circle"></i> Не определено</span>
+                  {% endif %}
+                </td>
+                <td class="text-center align-middle">
+                  {# Только для специалистов и админов: Редактировать и Снять пломбу #}
+                  {% if perms.TS_equipment.change_equipment or user.is_superuser %}
+                    {% if not perms.TS_equipment.can_set_unplanned_seal or user.is_superuser %}
+                      <a href="{% url 'equipment_edit' e.pk %}" class="btn btn-sm btn-outline-primary mt-1" title="Редактировать" data-bs-toggle="tooltip"><i class="bi bi-pencil"></i></a>
+                    {% endif %}
+                  {% endif %}
+                  <a href="{% url 'equipment_detail' e.pk %}" class="btn btn-sm btn-outline-info mt-1" title="Просмотр" data-bs-toggle="tooltip"><i class="bi bi-eye"></i></a>
+                  {% if perms.TS_equipment.can_assign_responsible or user.is_superuser %}
+                    <a href="{% url 'report_equipment_history' e.pk %}" class="btn btn-sm btn-outline-info mt-1" title="История пломбирования" data-bs-toggle="tooltip"><i class="bi bi-clock-history"></i></a>
+                  {% endif %}
+                  {# Кнопка Опломбировать для сотрудника #}
+                  {% if perms.TS_equipment.can_set_unplanned_seal and perms.TS_equipment.change_equipment and not user.is_superuser %}
+                    {% if not e.seal_datetime or e.unseal_datetime %}
+                      <a href="{% url 'seal_equipment' e.pk %}" class="btn btn-sm btn-outline-success mt-1" title="Опломбировать" data-bs-toggle="tooltip"><i class="bi bi-patch-check"></i> Опломбировать</a>
+                    {% endif %}
+                  {% endif %}
+                  {# Для специалистов и админов: Опломбировать и Снять пломбу #}
+                  {% if perms.TS_equipment.change_equipment and not perms.TS_equipment.can_set_unplanned_seal or user.is_superuser %}
+                    {% if not e.seal_datetime or e.unseal_datetime %}
+                      <a href="{% url 'seal_equipment' e.pk %}" class="btn btn-sm btn-outline-success mt-1" title="Опломбировать" data-bs-toggle="tooltip"><i class="bi bi-patch-check"></i> Опломбировать</a>
+                    {% elif e.seal_datetime and not e.unseal_datetime %}
+                      <a href="{% url 'unseal_equipment' e.pk %}" class="btn btn-sm btn-outline-danger mt-1" title="Снять пломбу" data-bs-toggle="tooltip"><i class="bi bi-x-circle"></i> Снять пломбу</a>
+                    {% endif %}
+                  {% endif %}
+                  {% if perms.TS_equipment.delete_equipment or user.is_superuser %}
+                    <a href="{% url 'equipment_delete' e.pk %}" class="btn btn-sm btn-outline-danger delete-equipment-btn mt-1" title="Удалить оборудование" data-bs-toggle="tooltip"><i class="bi bi-trash"></i></a>
+                  {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Bootstrap tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+      new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    // Клик по строке для перехода к деталям оборудования
+    document.querySelectorAll('.table-row-detail').forEach(function(row) {
+      row.addEventListener('click', function(e) {
+        if (e.target.closest('.delete-equipment-btn')) return;
+        window.location.href = row.getAttribute('data-href');
+      });
+    });
+    // Сортировка таблицы оборудования
+    function compareRows(a, b, idx, type, asc) {
+      let v1 = a.children[idx].innerText.trim();
+      let v2 = b.children[idx].innerText.trim();
+      if(type === 'number') {
+        v1 = parseFloat(v1.replace(/[^\d.]/g, '')) || 0;
+        v2 = parseFloat(v2.replace(/[^\d.]/g, '')) || 0;
+      }
+      if(type === 'string') {
+        v1 = v1.toLowerCase();
+        v2 = v2.toLowerCase();
+      }
+      if(v1 < v2) return asc ? -1 : 1;
+      if(v1 > v2) return asc ? 1 : -1;
+      return 0;
+    }
+    const table = document.getElementById('equipment-table');
+    const headers = table.querySelectorAll('th.sortable');
+    let sortState = {};
+    headers.forEach((th, idx) => {
+      th.addEventListener('click', function() {
+        let type = 'string';
+        if(['installed_date','seal_datetime'].includes(th.dataset.sort)) type = 'number';
+        const asc = !sortState[idx];
+        sortState = {}; sortState[idx] = asc;
+        table.querySelectorAll('span.sort-indicator').forEach(s => s.innerHTML = '');
+        th.querySelector('span.sort-indicator').innerHTML = asc ? '▲' : '▼';
+        const rows = Array.from(table.tBodies[0].rows);
+        rows.sort((a, b) => compareRows(a, b, idx, type, asc));
+        rows.forEach(r => table.tBodies[0].appendChild(r));
+      });
+    });
+  });
+</script>
+{% endblock %}
+{% block breadcrumb_items %}
+<li class="breadcrumb-item active" aria-current="page">Оборудование</li>
+{% endblock %}
