@@ -7,6 +7,9 @@
       {% if perms.TS_equipment.add_vehicle or user.is_superuser %}
         <a href="{% url 'vehicle_add' %}" class="btn btn-primary ms-2"><i class="bi bi-plus"></i> Добавить ТС</a>
       {% endif %}
+      {% if not is_guest %}
+      <a href="{% url 'report_vehicle_equipment_plain' %}" class="btn btn-outline-secondary ms-2"><i class="bi bi-filetype-html"></i> Сгенерировать отчёт (таблица)</a>
+      {% endif %}
     </div>
 </div>
 {% if messages %}

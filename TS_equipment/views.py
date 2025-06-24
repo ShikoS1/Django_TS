@@ -12,6 +12,11 @@ from django.db import models
 import json
 from django.core.mail import send_mail
 from django.conf import settings
+from django.contrib.auth import get_user_model, login
+from django.contrib.auth.models import Group
+from django.views.decorators.csrf import csrf_exempt
+import random
+import string
 
 from .models import Equipment, Vehicle, EquipmentLog, MaintenanceRecord, RepairHistory
 from .forms import VehicleForm, EquipmentForm, EquipmentAssignForm, MaintenanceRecordForm
@@ -57,13 +62,19 @@ def dashboard(request):
     total_vehicles = Vehicle.objects.count()
     total_equipment = Equipment.objects.count()
     equipment_in_use = total_equipment
-    recent_vehicles = Vehicle.objects.order_by('-id')[:5]
-    recent_equipment = Equipment.objects.order_by('-id')[:5]
+    # --- Индивидуальные последние объекты ---
+    recent_vehicles_ids = request.session.get('recent_vehicles', [])
+    recent_equipment_ids = request.session.get('recent_equipment', [])
+    recent_vehicles = list(Vehicle.objects.filter(id__in=recent_vehicles_ids))
+    # Сохраняем порядок просмотра
+    recent_vehicles.sort(key=lambda v: recent_vehicles_ids.index(v.id))
+    recent_equipment = list(Equipment.objects.filter(id__in=recent_equipment_ids))
+    recent_equipment.sort(key=lambda e: recent_equipment_ids.index(e.id))
+    # --- конец ---
     # Статистика ТОиР по статусам
     if MaintenanceRecord.objects.exists():
         status_counts = dict(Counter(MaintenanceRecord.objects.values_list('status', flat=True)))
         type_counts = dict(Counter(MaintenanceRecord.objects.values_list('type', flat=True)))
-        # Динамика по месяцам
         monthly_stats = MaintenanceRecord.objects.annotate(month=TruncMonth('date')).values('month', 'type').order_by('month').annotate(count=models.Count('id'))
         monthly_data = {}
         for row in monthly_stats:
@@ -101,7 +112,8 @@ def dashboard(request):
 @login_required
 def vehicle_list(request):
     vehicles = Vehicle.objects.all()
-    return render(request, 'TS_equipment/vehicle_list.html', {'vehicles': vehicles})
+    is_guest = request.user.groups.filter(name='Гость').exists()
+    return render(request, 'TS_equipment/vehicle_list.html', {'vehicles': vehicles, 'is_guest': is_guest})
 
 @login_required
 def equipment_list(request):
@@ -265,7 +277,6 @@ def equipment_edit(request, pk):
                 user=request.user,
                 details='; '.join(changed_fields) if changed_fields else 'Изменения не определены'
             )
-            messages.success(request, 'Данные оборудования обновлены!')
             return redirect('equipment_list')
     else:
         form = EquipmentForm(instance=equipment)
@@ -304,12 +315,27 @@ def equipment_delete(request, pk):
 @login_required
 def vehicle_detail(request, pk):
     vehicle = get_object_or_404(Vehicle, pk=pk)
-    logs = vehicle.logs.all() if hasattr(vehicle, 'logs') else []
+    # Исправлено: сортировка по timestamp, а не по date
+    logs = vehicle.logs.order_by('-timestamp')
+    # --- Сохраняем просмотренное ТС в сессию ---
+    recent_vehicles = request.session.get('recent_vehicles', [])
+    if pk in recent_vehicles:
+        recent_vehicles.remove(pk)
+    recent_vehicles.insert(0, pk)
+    request.session['recent_vehicles'] = recent_vehicles[:5]  # только 5 последних
+    # --- конец ---
     return render(request, 'TS_equipment/vehicle_detail.html', {'vehicle': vehicle, 'logs': logs})
 
 @login_required
 def equipment_detail(request, pk):
     equipment = get_object_or_404(Equipment, pk=pk)
+    # --- Сохраняем просмотренное оборудование в сессию ---
+    recent_equipment = request.session.get('recent_equipment', [])
+    if pk in recent_equipment:
+        recent_equipment.remove(pk)
+    recent_equipment.insert(0, pk)
+    request.session['recent_equipment'] = recent_equipment[:5]  # только 5 последних
+    # --- конец ---
     return render(request, 'TS_equipment/equipment_detail.html', {'equipment': equipment})
 
 @login_required
@@ -571,7 +597,11 @@ def report_equipment_history(request, pk):
 
 @login_required
 def report_vehicle_equipment(request):
-    vehicles = Vehicle.objects.prefetch_related('equipment').all()
+    vehicle_id = request.GET.get('vehicle_id')
+    if vehicle_id:
+        vehicles = Vehicle.objects.prefetch_related('equipment').filter(id=vehicle_id)
+    else:
+        vehicles = Vehicle.objects.prefetch_related('equipment').all()
     export = request.GET.get('export')
     if export == 'excel':
         from datetime import datetime
@@ -597,11 +627,14 @@ def report_vehicle_equipment(request):
         response['Content-Disposition'] = f'attachment; filename=vehicle_equipment_report_{timestamp}.xlsx'
         return response
     elif export == 'html':
+        from django.template import engines
         from datetime import datetime
-        html = render_to_string('TS_equipment/report_vehicle_equipment.html', {'vehicles': vehicles, 'export_mode': True})
+        django_engine = engines['django']
+        template = django_engine.get_template('TS_equipment/report_equipment_plain.html')
+        html = template.render({'vehicles': vehicles})
         timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         response = HttpResponse(html, content_type='text/html')
-        response['Content-Disposition'] = f'attachment; filename=vehicle_equipment_report_{timestamp}.html'
+        response['Content-Disposition'] = f'attachment; filename=vehicle_equipment_plain_{timestamp}.html'
         return response
     return render(request, 'TS_equipment/report_vehicle_equipment.html', {'vehicles': vehicles})
 
@@ -965,3 +998,26 @@ def test_email(request):
             messages.error(request, f'Ошибка отправки: {e}')
         return redirect('dashboard')
     return render(request, 'TS_equipment/test_email.html')
+
+def guest_login(request):
+    User = get_user_model()
+    guest_group_name = 'Гость'
+    # Генерируем уникальный username
+    while True:
+        random_suffix = ''.join(random.choices(string.digits, k=6))
+        guest_username = f'guest_{random_suffix}'
+        if not User.objects.filter(username=guest_username).exists():
+            break
+    guest = User.objects.create(
+        username=guest_username,
+        is_active=True,
+        is_staff=False,
+        is_superuser=False,
+    )
+    guest.set_unusable_password()
+    guest.save()
+    # Добавить в группу "Гость"
+    group, _ = Group.objects.get_or_create(name=guest_group_name)
+    guest.groups.add(group)
+    login(request, guest)
+    return redirect('/')

@@ -1,56 +1,15 @@
-{% extends "TS_equipment/base.html" %}
-{% block title %}Оборудование по ТС{% endblock %}
+{% extends 'TS_equipment/base.html' %}
+
+{% block title %}Оборудование по транспортным средствам{% endblock %}
 {% block content %}
 <div class="container py-3">
     <div class="d-flex justify-content-end mb-3 gap-2">
+        {% if not user.groups.filter(name='Гость').exists %}
         <a href="?export=excel" class="btn btn-outline-success"><i class="bi bi-file-earmark-excel"></i> Скачать Excel</a>
         <a href="?export=html" class="btn btn-outline-primary"><i class="bi bi-file-earmark-text"></i> Скачать HTML</a>
+        {% endif %}
     </div>
     <h2 class="mb-4"><i class="bi bi-truck"></i> Оборудование по транспортным средствам</h2>
-    {% if export_mode %}
-    <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse; width:100%; font-size:15px;">
-        <thead style="background:#e3f0fa;">
-            <tr>
-                <th style="text-align:left;">ТС (гос. номер)</th>
-                <th style="text-align:left;">Модель</th>
-                <th style="text-align:left;">Оборудование</th>
-                <th style="text-align:left;">Серийный номер</th>
-                <th style="text-align:left;">Статус пломбы</th>
-                <th style="text-align:left;">Дата последнего ТО</th>
-                <th style="text-align:left;">Исправность</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for vehicle in vehicles %}
-            {% for eq in vehicle.equipment.all %}
-            <tr>
-                <td>{{ vehicle.license_plate }}</td>
-                <td>{{ vehicle.model }}</td>
-                <td>{{ eq.name }}</td>
-                <td>{{ eq.serial_number }}</td>
-                <td>{% if eq.seal_datetime and not eq.unseal_datetime %}Пломбировано{% elif eq.unseal_datetime %}Снята пломба{% else %}Без пломбы{% endif %}</td>
-                <td>{% if eq.maintenance_date %}{{ eq.maintenance_date|date:'d.m.Y' }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
-                <td>
-                    {% if eq.repair_date %}
-                        <span class="badge bg-danger">В ремонте</span>
-                    {% elif eq.maintenance_date %}
-                        <span class="badge bg-warning text-dark">На ТО</span>
-                    {% else %}
-                        <span class="badge bg-success">Исправно</span>
-                    {% endif %}
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td>{{ vehicle.license_plate }}</td>
-                <td>{{ vehicle.model }}</td>
-                <td colspan="3" style="text-align:left; color:#888;">Нет установленного оборудования</td>
-            </tr>
-            {% endfor %}
-        {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
     <div class="row g-4">
         {% for vehicle in vehicles %}
         <div class="col-md-6">
@@ -88,10 +47,5 @@
         <div class="col-12 text-center text-muted">Нет данных</div>
         {% endfor %}
     </div>
-    {% endif %}
 </div>
-{% endblock %}
-{% block breadcrumb_items %}
-<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Главная</a></li>
-<li class="breadcrumb-item active" aria-current="page">Оборудование по ТС</li>
 {% endblock %}

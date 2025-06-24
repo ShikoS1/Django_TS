@@ -54,6 +54,20 @@
         </div>
       </div>
     </div>
+    <div class="mb-3">
+      <form method="get" action="{% url 'report_vehicle_equipment' %}" class="d-inline">
+        <input type="hidden" name="vehicle_id" value="{{ vehicle.id }}">
+        <div class="input-group">
+          <button class="btn btn-outline-success dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-file-earmark-arrow-down"></i> Сгенерировать отчёт
+          </button>
+          <ul class="dropdown-menu">
+            <li><button class="dropdown-item" type="submit" name="export" value="excel">В формате Excel</button></li>
+            <li><button class="dropdown-item" type="submit" name="export" value="html">В формате HTML</button></li>
+          </ul>
+        </div>
+      </form>
+    </div>
     <hr>
     <h5 class="mt-4 mb-3"><i class="bi bi-tools"></i> Оборудование, установленное в ТС</h5>
     {% if vehicle.equipment.all %}

@@ -76,9 +76,7 @@
                         </td>
                         <td>
                             {% if e.maintenance_date %}
-                                {% with next_maintenance=e.maintenance_date|add:'365' %}
-                                    1 раз в год
-                                {% endwith %}
+                                1 раз в год
                             {% else %}
                                 —
                             {% endif %}

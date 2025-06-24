@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Оборудование по транспортным средствам</title>
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 15px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #bbb; padding: 6px; }
+        th { background: #e3f0fa; }
+    </style>
+</head>
+<body>
+<table>
+    <thead>
+        <tr>
+            <th>ТС (гос. номер)</th>
+            <th>Модель</th>
+            <th>Оборудование</th>
+            <th>Серийный номер</th>
+            <th>Статус пломбы</th>
+            <th>Дата последнего ТО</th>
+            <th>Исправность</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for vehicle in vehicles %}
+        {% for eq in vehicle.equipment.all %}
+        <tr>
+            <td>{{ vehicle.license_plate }}</td>
+            <td>{{ vehicle.model }}</td>
+            <td>{{ eq.name }}</td>
+            <td>{{ eq.serial_number }}</td>
+            <td>{% if eq.seal_datetime and not eq.unseal_datetime %}Пломбировано{% elif eq.unseal_datetime %}Снята пломба{% else %}Без пломбы{% endif %}</td>
+            <td>{% if eq.maintenance_date %}{{ eq.maintenance_date|date:'d.m.Y' }}{% else %}—{% endif %}</td>
+            <td>
+                {% if eq.repair_date %}
+                    В ремонте
+                {% elif eq.maintenance_date %}
+                    На ТО
+                {% else %}
+                    Исправно
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td>{{ vehicle.license_plate }}</td>
+            <td>{{ vehicle.model }}</td>
+            <td colspan="5" style="text-align:left; color:#888;">Нет установленного оборудования</td>
+        </tr>
+        {% endfor %}
+    {% endfor %}
+    </tbody>
+</table>
+</body>
+</html>

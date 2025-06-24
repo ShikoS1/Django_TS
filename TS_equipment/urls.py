@@ -1,6 +1,7 @@
-from django.contrib.auth.views import LoginView, LogoutView
+from django.contrib.auth.views import LoginView
 from django.urls import path
 from . import views
+from .views_report_plain import report_vehicle_equipment_plain
 
 urlpatterns = [
     path('', views.dashboard, name='dashboard'),
@@ -30,6 +31,7 @@ urlpatterns = [
     path('reports/equipment/', views.report_equipment_list, name='report_equipment_list'),
     path('reports/equipment/<int:pk>/history/', views.report_equipment_history, name='report_equipment_history'),
     path('reports/vehicles/', views.report_vehicle_equipment, name='report_vehicle_equipment'),
+    path('reports/vehicles/plain/', report_vehicle_equipment_plain, name='report_vehicle_equipment_plain'),
     path('reports/maintenance/repair/', views.maintenance_report_repair, name='maintenance_report_repair'),
 
     # Маршруты для ТОиР
@@ -51,7 +53,6 @@ urlpatterns = [
 
     # Маршруты для администрирования
     path('admin/login/', LoginView.as_view(template_name='TS_equipment/login.html', redirect_authenticated_user=False, next_page='/'), name='login'),
-    path('admin/logout/', LogoutView.as_view(next_page='/'), name='logout'),
 
     # Тестовый маршрут для отправки почты
     path('test-email/', views.test_email, name='test_email'),
