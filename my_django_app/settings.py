@@ -21,7 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = '34h5j3h5jkh34583489h8fgh3GjjGJJCLSDAScCAFh3498h98gh3498h983hgh488384'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['TSequip.ru', 'localhost', '127.0.0.1', '176.109.111.197']
 
