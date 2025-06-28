@@ -17,8 +17,8 @@
     </div>
 </div>
 <div class="row justify-content-center">
-    <div class="col-xxl-10 col-xl-11 col-lg-12 col-12">
-        <div class="row">
+    <div class="col-12">
+        <div class="row g-2">
             <div class="col-md-4 mb-4">
                 <div class="card text-white bg-primary h-100">
                     <div class="card-body">
@@ -89,8 +89,8 @@
     </div>
 </div>
 
-<div class="row">
-    <div class="col-md-6">
+<div class="row g-2">
+    <div class="col-12 col-md-6">
         <div class="card h-100">
             <div class="card-header bg-primary text-white">
                 <h5>Последние транспортные средства</h5>
@@ -108,7 +108,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-6">
+    <div class="col-12 col-md-6">
         <div class="card h-100">
             <div class="card-header bg-primary text-white">
                 <h5>Последнее оборудование</h5>
@@ -147,6 +147,21 @@
     text-align: center;
     box-sizing: border-box;
     font-size: 1em;
+  }
+}
+@media (max-width: 767.98px) {
+  .row.g-2, .row {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+  .col-12, .col-md-4, .col-md-6 {
+    max-width: 100% !important;
+    flex: 0 0 100% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+  .card {
+    margin-bottom: 1rem;
   }
 }
 </style>
