@@ -4,7 +4,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=1400, initial-scale=0.8, user-scalable=yes">
+    <meta name="viewport" content="width=1400, user-scalable=no">
     <title>Учет оборудования ТС - {% block title %}{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
@@ -146,13 +146,14 @@
             box-sizing: border-box;
           }
           /* Для блоков с бейджами/статусами в ТОиР */
-          .toir-status-row, .toir-status-badges, .status-badge {
+          .toir-status-row, .toir-status-badges {
+            display: flex !important;
             flex-wrap: wrap !important;
-            white-space: normal !important;
-            word-break: break-word !important;
-            min-width: 0 !important;
-            max-width: 100% !important;
-            box-sizing: border-box;
+            flex-direction: row !important;
+            justify-content: center !important;
+            align-items: flex-start !important;
+            gap: 0.4em !important;
+            width: 100% !important;
           }
         }
         @media (max-width: 576px) {
@@ -188,6 +189,14 @@
             word-break: break-word !important;
             overflow-wrap: break-word !important;
             box-sizing: border-box;
+          }
+          .status-badge.completed {
+            order: 2 !important;
+            width: 100% !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
+            text-align: center !important;
+            display: block !important;
           }
         }
         .status-badge {

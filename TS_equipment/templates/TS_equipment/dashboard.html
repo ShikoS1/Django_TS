@@ -60,7 +60,7 @@
                             <h5 class="card-title">ТОиР</h5>
                             <i class="bi bi-wrench-adjustable fs-3"></i>
                         </div>
-                        <div class="row text-center mb-2">
+                        <div class="row text-center mb-2 toir-status-row">
                             <div class="col-4">
                                 <span class="badge bg-info fs-6"><i class="bi bi-gear"></i> ТО</span><br>
                                 <span class="fs-5">{{ maintenance_stats.maintenance|default:'0' }}</span>
@@ -127,6 +127,29 @@
         </div>
     </div>
 </div>
+
+<style>
+@media (max-width: 1200px) {
+  .toir-status-row .col-4 {
+    max-width: 33.3333%;
+    flex: 0 0 33.3333%;
+    padding-left: 2px;
+    padding-right: 2px;
+    box-sizing: border-box;
+  }
+  .toir-status-row .badge {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    white-space: normal;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    text-align: center;
+    box-sizing: border-box;
+    font-size: 1em;
+  }
+}
+</style>
 {% endblock %}
 
 {% block extra_js %}{% endblock %}
